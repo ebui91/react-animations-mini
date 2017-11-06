@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import Card from './Card';
+import { TransitionMotion, spring } from 'react-motion';
 import './App.css';
 
 
@@ -19,6 +20,10 @@ export default class App extends Component {
         this.addTodo = this.addTodo.bind(this);
         this.removeTodo = this.removeTodo.bind(this);
         this.toggle = this.toggle.bind(this);
+        this.getDefaultStyles= this.getDefaultStyles.bind(this);
+        this.getStyles= this.getStyles.bind(this);
+        this.willEnter= this.willEnter.bind(this);
+        this.willLeave= this.willLeave.bind(this);
     }
 
     addTodo(e) {
@@ -55,36 +60,72 @@ export default class App extends Component {
         })
     }
 
+    getDefaultStyles(){
+      return this.state.todos.map( todo=> {
+        return Object.assign({}, todo, {style: { height: 0, opacity: 0 }})
+      })
+    }
+
+    getStyles(){
+      return this.state.todos.map( todo=> {
+        return Object.assign({}, todo, {style: { height: spring(65), opacity: spring(1) }})
+      })
+    }
+
+// Assigns default style for any future components being rendered.
+    willEnter(){
+      return{
+        height:0,
+        opacity: 0
+      }
+    }
+
+// Component animates to these values whenever it unmounts.
+    willLeave(){
+      return{
+        height: spring(0),
+        opacity: spring(0)
+      }
+    }
 
     render() {
-
-        const todos = this.state.todos.map( (todo, i) => {
-            return <Card 
-                        key={i}
-                        toggle={ this.toggle }
-                        removeTodo={ this.removeTodo } 
-                        todo={ todo } /> 
-        })
-
         return(
             <div className='app'>
                 <h1>to-dos</h1>
                 <div className='todos-wrap'>
-                    <div className='right-arrow'>></div> 
+                    <div className='right-arrow'>></div>
                     <div className='input-container'>
                         <form onSubmit={ this.addTodo }>
-                            <input 
+                            <input
                                 ref={ input => this.inputRef = input}
                                 placeholder='add new to-do...'
                                 className='todo-inp'
-                                /> 
-                        </form>   
+                                />
+                        </form>
                     </div>
-                    <div>
-                        { todos }
-                    </div>  
-                </div> 
-            </div> 
+
+                    <TransitionMotion
+                      defaultStyles={ this.getDefaultStyles() }
+                      styles={ this.getStyles() }
+                      willEnter={ this.willEnter }
+                      willLeave={ this.willLeave }
+                    >
+                      { (styles)=> {
+                        return(
+                          <div>
+                            {styles.map( (todo) => {
+                                return <Card
+                                            key={ todo.key }
+                                            toggle={ this.toggle }
+                                            removeTodo={ this.removeTodo }
+                                            todo={ todo } />
+                                        })}
+                          </div>
+                        )
+                      }}
+                    </TransitionMotion>
+                </div>
+            </div>
         )
     }
 }
